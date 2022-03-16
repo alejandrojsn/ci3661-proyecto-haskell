@@ -43,15 +43,15 @@ instance Read Match where
   readPrec = parens $ do
     c <- get
     case c of
-      "\129001" -> do
+      '\129001' -> do
         _ <- get
         x <- get
         return $ Correct x
-      "\129000" -> do
+      '\129000' -> do
         _ <- get
         x <- get
         return $ Misplaced x
-      "\11035" -> do
+      '\11035' -> do
         _ <- get
         x <- get
         return $ Absent x
