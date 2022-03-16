@@ -3,10 +3,12 @@ module Match(
   Target(..),
   Guess(..),
   match,
+  match',
 ) where
 
 import Text.Read
 import Text.ParserCombinators.ReadPrec 
+import qualified AA as AA 
 
 data Match = Absent Char
             | Misplaced Char
@@ -15,9 +17,18 @@ data Match = Absent Char
 data Target = Target String
 data Guess = Guess String
 
-{- Hace mas de 1 pasada (acomodar) -}
+{- Hace una sola pasada perooo asume que el arbol tiene un [..] en val -}
 match :: Guess -> Target -> [Match]
-match (Guess xs) (Target ys) =  [getMatch x y | (x,y) <- zip xs ys]
+match (Guess xs) (Target ys) =
+        [getMatch x c | (x,c) <- zip xs [(0::Int)..]]
+        where getMatch x c = case AA.lookup x table of
+                                      Nothing -> Absent x
+                                      Just i  -> if c `elem` i then Correct x else Misplaced x
+                where table = foldr (\(ch, i) acc -> AA.insert ch i acc) AA.empty $ zip ys [(0::Int)..] 
+
+{- Hace mas de 1 pasada (acomodar) -}
+match' :: Guess -> Target -> [Match]
+match' (Guess xs) (Target ys) =  [getMatch x y | (x,y) <- zip xs ys]
                                 where getMatch x y
                                         | x == y = Correct x
                                         | x `elem` ys = Misplaced x

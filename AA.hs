@@ -6,6 +6,8 @@ module AA (
   lookup,
 ) where
 
+import Prelude hiding (lookup)
+
 data AA k a = Empty
             | Node { lvl :: Int
             , key :: k
@@ -36,16 +38,16 @@ isEmpty :: AA k a -> Bool
 isEmpty Empty = True
 isEmpty _ = False
 
-insert :: (Ord k) => k -> a -> AA k a -> AA k a
-insert k v Empty = Node 0 k v Empty Empty
+insert :: (Ord k) => k -> a -> AA k [a] -> AA k [a]
+insert k v Empty = Node 0 k ([v]) Empty Empty
 insert k v (Node l k' v' lAA rAA)
-  | k == k' = Node l k' v' lAA rAA
+  | k == k' = Node l k' (v:v') lAA rAA
   | k < k' = Node l k' v' (insert k v lAA) rAA
   | k > k' = Node l k' v' lAA (insert k v rAA)
 
-lookup' :: (Ord k) => k -> AA k a -> Maybe a
-lookup' k Empty = Nothing
-lookup' k (Node l k' v' lAA rAA)
+lookup :: (Ord k) => k -> AA k a -> Maybe a
+lookup k Empty = Nothing
+lookup k (Node l k' v' lAA rAA)
   | k == k' = Just v'
-  | k < k' = lookup' k lAA
-  | k > k' = lookup' k rAA
+  | k < k' = lookup k lAA
+  | k > k' = lookup k rAA
