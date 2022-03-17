@@ -7,6 +7,7 @@ module AA (
 ) where
 
 import Prelude hiding (lookup)
+import Data.Bifunctor ( Bifunctor(bimap) )
 
 data AA k a = Empty
             | Node { lvl :: Int
@@ -66,3 +67,28 @@ lookup k (Node l k' v' lAA rAA)
   | k == k' = Just v'
   | k < k' = lookup k lAA
   | k > k' = lookup k rAA
+
+checkInvariants :: AA k a -> (Bool, [ AA k a ])
+checkInvariants Empty = (True, [])
+checkInvariants a = if leafLevel a && leftChildLevel a  && rightGrandChildLevel a && twoChilds a
+                    then bimap (fst left &&) (snd left ++) right
+                    else (False, a : snd left ++ snd right)
+  where
+    left = checkInvariants (lAA a)
+    right = checkInvariants (rAA a)
+    leafLevel :: AA k a -> Bool
+    leafLevel (Node l _ _ Empty Empty) = l == 1
+    leafLevel _ = True
+    leftChildLevel :: AA k a -> Bool
+    leftChildLevel Empty = True
+    leftChildLevel (Node _ _ _ Empty _) = True
+    leftChildLevel (Node l _ _ lt _) = lvl lt < l
+    rightGrandChildLevel :: AA k a -> Bool
+    rightGrandChildLevel Empty = True
+    rightGrandChildLevel (Node _ _ _ _ Empty) = True
+    rightGrandChildLevel (Node _ _ _ _ (Node _ _ _ _ Empty)) = True
+    rightGrandChildLevel (Node l _ _ _ rt) = lvl (rAA rt) < l
+    twoChilds :: AA k a -> Bool
+    twoChilds (Node l _ _ _ Empty) | l > 1 = False
+    twoChilds (Node l _ _ Empty _) | l > 1 = False
+    twoChilds _ = True
