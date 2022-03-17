@@ -70,7 +70,7 @@ lookup k (Node l k' v' lAA rAA)
 
 checkInvariants :: AA k a -> (Bool, [ AA k a ])
 checkInvariants Empty = (True, [])
-checkInvariants a = if leafLevel a && leftChildLevel a  && rightGrandChildLevel a && twoChilds a
+checkInvariants a = if foldr ((&&) . ($a)) True [leafLevel, leftChildLevel, rightGrandChildLevel, twoChilds]
                     then bimap (fst left &&) (snd left ++) right
                     else (False, a : snd left ++ snd right)
   where
