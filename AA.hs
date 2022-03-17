@@ -58,8 +58,8 @@ insert :: (Ord k) => k -> a -> AA k a -> AA k a
 insert k v Empty = Node 1 k v Empty Empty
 insert k v (Node l k' v' lt rt)
   | k == k' = Node l k' v lt rt
-  | k < k' = split $ skew $ Node l k' v' (split $ skew  $ insert k v lt) rt
-  | k > k' = split $ skew $ Node l k' v' lt (split $ skew $ insert k v rt)
+  | k < k' = split $ skew $ Node l k' v' (insert k v lt) rt
+  | k > k' = split $ skew $ Node l k' v' lt (insert k v rt)
 
 lookup :: (Ord k) => k -> AA k a -> Maybe a
 lookup k Empty = Nothing
