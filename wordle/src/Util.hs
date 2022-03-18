@@ -23,7 +23,7 @@ fiveLetterWords = filter (\x -> length x == 5 && all isLower x)
 loadDictionary :: FilePath -> IO (AA.AA String String)
 loadDictionary fp = do
   contents <- readFile fp
-  return $ foldr (\(k, v) a -> AA.insert k v a) AA.empty $ map (\x -> (x, x)) $ lines contents
+  return $ foldr (\(k, v) a -> AA.insert k v a) AA.empty $ map (\x -> (x, x)) $ fiveLetterWords $ lines contents
 
 lengthDict :: FilePath -> IO Int
 lengthDict fp = do

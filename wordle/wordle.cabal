@@ -28,6 +28,7 @@ library
       AA
       Lib
       Match
+      Play
       Util
   other-modules:
       Paths_wordle
