@@ -41,32 +41,34 @@ isEmpty _ = False
 
 skew :: AA k a -> AA k a
 skew Empty = Empty
-skew (Node l k v Empty rt) = Node l k v Empty rt
-skew (Node l k v lt rt) = if lvl lt == l
-                          then lt { rAA = Node l k v (rAA lt) rt}
-                          else Node l k v lt rt
+skew n@(Node _ _ _ Empty _) = n
+skew n@(Node l _ _ lt _) = if lvl lt == l
+                         then lt { rAA = n { lAA = rAA lt } }
+                         else n
 
 split :: AA k a -> AA k a
 split Empty = Empty
-split (Node l k v lt Empty) = Node l k v lt Empty
-split (Node l k v lt (Node l' k' v' lt' Empty)) = Node l k v lt (Node l' k' v' lt' Empty)
-split (Node l k v lt rt) = if lvl (rAA rt) == l
-                           then rt { lvl = lvl rt + 1, lAA = Node l k v lt (lAA rt) }
-                           else Node l k v lt rt
+split n@(Node _ _ _ _ Empty) = n
+split n@(Node _ _ _ _ (Node _ _ _ _ Empty)) = n
+split n@(Node l _ _ _ rt) = if lvl (rAA rt) == l
+                          then rt { lvl = lvl rt + 1
+                                  , lAA = n { rAA = lAA rt }
+                                  }
+                          else n
 
 insert :: (Ord k) => k -> a -> AA k a -> AA k a
 insert k v Empty = Node 1 k v Empty Empty
-insert k v (Node l k' v' lt rt)
-  | k == k' = Node l k' v lt rt
-  | k < k' = split $ skew $ Node l k' v' (insert k v lt) rt
-  | k > k' = split $ skew $ Node l k' v' lt (insert k v rt)
+insert k v n@(Node _ k' _ lt rt)
+  | k == k' = n { val = v }
+  | k <  k' = split $ skew $ n { lAA = insert k v lt }
+  | k  > k' = split $ skew $ n { rAA = insert k v rt }
 
 lookup :: (Ord k) => k -> AA k a -> Maybe a
 lookup k Empty = Nothing
-lookup k (Node l k' v' lAA rAA)
-  | k == k' = Just v'
-  | k < k' = lookup k lAA
-  | k > k' = lookup k rAA
+lookup k (Node _ k' v lt rt)
+  | k == k' = Just v
+  | k <  k' = lookup k lt
+  | k  > k' = lookup k rt
 
 checkInvariants :: AA k a -> (Bool, [ AA k a ])
 checkInvariants Empty = (True, [])
