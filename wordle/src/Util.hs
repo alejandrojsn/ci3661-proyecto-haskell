@@ -18,7 +18,7 @@ dictionary :: FilePath
 dictionary = "/usr/share/dict/american-english"
 
 fiveLetterWords :: [String] -> [String]
-fiveLetterWords = filter (\x -> length x == 5 && all isLower x)
+fiveLetterWords = filter (\x -> length x == 5 && all (`elem` ['a'..'z']) x)
 
 loadDictionary :: FilePath -> IO (AA.AA String String)
 loadDictionary fp = do

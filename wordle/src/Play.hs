@@ -11,6 +11,11 @@ data GameState = GS { played :: Int
                     , dict :: AA.AA String String
                     }
 
+initialState :: IO GameState
+initialState = do
+  dict <- loadDictionary dictionary
+  return $ GS 0 0 0 (Target "") dict
+
 instance Show GameState where
   show (GS played won streak target dict) =
     "Played: " ++ show played ++ " " ++
