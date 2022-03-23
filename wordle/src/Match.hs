@@ -15,7 +15,7 @@ data Match = Absent Char
             | Misplaced Char
             | Correct Char
 
-data Target = Target String
+data Target = Target String deriving Eq
 data Guess = Guess String
 
 {- Hace una sola pasada perooo asume que el arbol tiene un [..] en val -}

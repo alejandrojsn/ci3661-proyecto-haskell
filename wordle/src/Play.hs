@@ -32,20 +32,39 @@ instance Show GameState where
 
 data Result = Win Target
             | Lose Target
+          deriving Eq
 
 instance Show Result where
   show (Win (Target t)) = "Got it! It was " ++ t ++ " \128526"
   show (Lose (Target t)) = "Bummer! It was " ++ t ++ " \128128"
 
-playTheGame = do
-  d <- loadDictionary dictionary
-  play 1 (Target "hello") d
+playTheGame :: IO GameState -> IO ()
+playTheGame gsInitial = do
+  hSetBuffering stdout NoBuffering
+  hSetBuffering stdin NoBuffering
+  dict <- loadDictionary dictionary
+  target <- pickTarget dict
+  putStrLn "Welcome to the game of Hangman!"
+  result <- play 1 target dict
+  gs <- gsInitial
+  let gsNew = return $ gs { played = played gs + 1
+                          , won = if result == Win target then won gs + 1 else won gs
+                          , streak = if result == Win target then streak gs + 1 else 0
+                          , target = target
+                          , dict = dict
+                          }
+  putStrLn $ show result
+  gsShow <- gsNew
+  putStrLn $ show gsShow
+  yn <- yesOrNo
+  if yn then playTheGame gsNew else return ()
 
 play :: Int -> Target -> AA.AA String String -> IO Result
-play currentTurn target dict = do 
+play currentTurn target dict = do
   putStr $ "Guess " ++ show currentTurn ++ "? "
   hSetEcho stdin False
   guess <- readFive
+  hSetEcho stdin True
   case AA.lookup guess dict of
     Nothing -> do
       putStrLn $ " Your guess \'" ++ guess ++ "\' is not a valid word!"
@@ -59,7 +78,6 @@ play currentTurn target dict = do
         else if currentTurn == turns
           then return $ Lose target
           else play (currentTurn+1) target dict
-
 
 readFive :: IO String
 readFive = readChars 5 "" <&> map toLower
@@ -75,6 +93,7 @@ readFive = readChars 5 "" <&> map toLower
       if isLetter c
         then do
           putChar c
+          --hFlush stdout
           readChars (n-1) (c:"")
         else
           readChars n ""
@@ -84,6 +103,9 @@ readFive = readChars 5 "" <&> map toLower
         '\n' -> pure s
         '\DEL' -> do
             putChar '\b'
+            putChar ' '
+            putChar '\b'
+            --hFlush stdout
             readChars 1 (init s)
         _ -> readChars 0 s
     readChars n s = do
@@ -91,11 +113,15 @@ readFive = readChars 5 "" <&> map toLower
       if isLetter c
         then do
           putChar c
+          --hFlush stdout
           readChars (n-1) (s ++ [c])
         else
           if c == '\DEL'
             then do
               putChar '\b'
+              putChar ' '
+              putChar '\b'
+              --hFlush stdout
               readChars (n+1) (init s)
             else readChars n s
 

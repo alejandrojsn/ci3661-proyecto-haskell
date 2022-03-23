@@ -1,6 +1,12 @@
 module Main where
 
-import Lib
+import AA as AA
+import Match
+import Util
+import Play
 
 main :: IO ()
-main = someFunc
+main = do
+  putStrLn "Kinda Wordle!"  
+  playTheGame initialState
+  return ()
