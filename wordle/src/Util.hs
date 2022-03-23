@@ -10,6 +10,7 @@ module Util(
 import qualified AA as AA
 import Control.Monad 
 import Data.Char
+import System.IO
 
 turns :: Int
 turns = 6
@@ -33,9 +34,18 @@ lengthDict fp = do
 yesOrNo :: IO Bool
 yesOrNo = do
   putStr "y/n?"
+  yesOrNo'
+
+yesOrNo' :: IO Bool
+yesOrNo' = do
+  hSetEcho stdin False
   yn <- getChar
   case yn of
-    'y' -> return True
-    'n' -> return False
-    _ -> yesOrNo
+    'y' -> do
+      putStrLn "y"
+      return True
+    'n' -> do 
+      putStrLn "n"
+      return False
+    _ -> yesOrNo'
   

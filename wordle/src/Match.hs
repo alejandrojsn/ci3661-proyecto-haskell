@@ -4,6 +4,7 @@ module Match(
   Guess(..),
   match,
   match',
+  fullMatch,
 ) where
 
 import Text.Read
