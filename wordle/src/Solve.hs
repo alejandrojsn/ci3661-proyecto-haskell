@@ -32,10 +32,11 @@ sieve :: [Match] -> [String] -> [String]
 sieve xs ys = filter (\y -> isPartialMatch xs y) ys
 
 naive hint xs = fmap snd $ foldM (\acc str -> lookCandidate str acc hint) (1, "") xs
-                  where lookCandidate target (len, s) hint = do 
-                                                        rnd <- randomRIO (1, len) :: IO Int
-                                                        if isPartialMatch hint target && rnd == 1
-                                                          then return (len + 1, target)
+                  where lookCandidate cand (len, s) hint = do 
+                                                        if isPartialMatch hint cand 
+                                                          then do
+                                                            rnd <- randomRIO (1, len) :: IO Int
+                                                            return (len+1, if rnd == 1 then cand else s)
                                                           else return (len, s)
 
 format :: Match -> Char
