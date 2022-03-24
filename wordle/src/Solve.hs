@@ -31,7 +31,9 @@ initialSolver solver = do
 sieve :: [Match] -> [String] -> [String]
 sieve xs ys = filter (\y -> isPartialMatch xs y) ys
 
-naive hint xs = fmap snd $ foldM (\acc str -> lookCandidate str acc hint) (1, "") xs
+naive :: [Match] -> SolverState -> IO String
+naive hint (GS s xs r d _) 
+            = fmap snd $ foldM (\acc str -> lookCandidate str acc hint) (1, "") xs
                   where lookCandidate cand (len, s) hint = do 
                                                         if isPartialMatch hint cand 
                                                           then do
