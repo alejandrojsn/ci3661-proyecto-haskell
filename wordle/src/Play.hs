@@ -102,9 +102,7 @@ readFive = readChars 5 "" <&> map toLower
       case c of
         '\n' -> pure s
         '\DEL' -> do
-            putChar '\b'
-            putChar ' '
-            putChar '\b'
+            putStr "\b \b"
             --hFlush stdout
             readChars 1 (init s)
         _ -> readChars 0 s
@@ -118,9 +116,7 @@ readFive = readChars 5 "" <&> map toLower
         else
           if c == '\DEL'
             then do
-              putChar '\b'
-              putChar ' '
-              putChar '\b'
+              putStr "\b \b"
               --hFlush stdout
               readChars (n+1) (init s)
             else readChars n s

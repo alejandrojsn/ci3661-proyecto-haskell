@@ -29,6 +29,7 @@ library
       Lib
       Match
       Play
+      Solve
       Util
   other-modules:
       Paths_wordle
@@ -37,6 +38,19 @@ library
   build-depends:
       base >=4.7 && <5
     , random
+  default-language: Haskell2010
+
+executable solver-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_wordle
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , random
+    , wordle
   default-language: Haskell2010
 
 executable wordle-exe

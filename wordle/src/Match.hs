@@ -14,6 +14,7 @@ import qualified AA as AA
 data Match = Absent Char
             | Misplaced Char
             | Correct Char
+            deriving Eq
 
 data Target = Target String deriving Eq
 data Guess = Guess String
