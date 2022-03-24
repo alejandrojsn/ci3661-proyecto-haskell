@@ -5,6 +5,7 @@ import Util
 import Match
 import System.Random
 import Control.Monad
+import Data.Foldable (Foldable(toList))
 
 data Solver = Naive | Clever
 data SolverState = GS { suggestion :: String
@@ -52,3 +53,11 @@ isPartialMatch :: [Match] -> String -> Bool
 isPartialMatch xs ys = match guess (Target ys) == xs
                       where guess = Guess $ map format xs
 
+
+clever :: [Match] -> SolverState -> IO String
+clever hint (GS _ _ _ dict _) = pure $ snd $ minimum $ fmap (
+    \w -> (maximum $ fmap (
+        \p -> length $ sieve (match (Guess w) (Target p)) words
+    ) words, w)
+  ) words
+  where words = sieve hint (toList dict)
