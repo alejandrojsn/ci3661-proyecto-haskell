@@ -24,28 +24,29 @@ fiveLetterWords = filter (\x -> length x == 5 && all (`elem` ['a'..'z']) x)
 loadDictionary :: FilePath -> IO (AA.AA String String)
 loadDictionary fp = do
   contents <- readFile fp
-  return $ foldr (\(k, v) a -> AA.insert k v a) AA.empty $ map (\x -> (x, x)) $ fiveLetterWords $ lines contents
+  pure $ foldr (\(k, v) a -> AA.insert k v a) AA.empty $ map (\x -> (x, x)) $ fiveLetterWords $ lines contents
 
 lengthDict :: FilePath -> IO Int
 lengthDict fp = do
   contents <- readFile fp
-  return $ length $ fiveLetterWords $ lines contents
+  pure $ length $ fiveLetterWords $ lines contents
 
 yesOrNo :: IO Bool
 yesOrNo = do
-  putStr "y/n?"
+  putStr "(y/n)?"
   yesOrNo'
 
 yesOrNo' :: IO Bool
 yesOrNo' = do
   hSetEcho stdin False
   yn <- getChar
+  hSetEcho stdin True
   case yn of
     'y' -> do
       putStrLn "y"
-      return True
+      pure True
     'n' -> do 
       putStrLn "n"
-      return False
+      pure False
     _ -> yesOrNo'
   

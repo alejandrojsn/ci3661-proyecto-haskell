@@ -45,7 +45,7 @@ executable solver-exe
   other-modules:
       Paths_wordle
   hs-source-dirs:
-      app
+      solver
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -58,7 +58,7 @@ executable wordle-exe
   other-modules:
       Paths_wordle
   hs-source-dirs:
-      app
+      wordle
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5

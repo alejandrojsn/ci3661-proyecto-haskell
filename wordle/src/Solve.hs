@@ -6,8 +6,13 @@ import Match
 import System.Random
 import Control.Monad
 import Data.Foldable (Foldable(toList))
+import System.IO
+import Text.Read (readMaybe)
+import System.Environment
+import Data.Char (toLower)
 
 data Solver = Naive | Clever
+
 data SolverState = GS { suggestion :: String
                       , possible :: [String]
                       , remaining :: Int
@@ -22,37 +27,106 @@ initialSolver :: Solver -> IO SolverState
 initialSolver solver = do 
   dict <- loadDictionary dictionary
   let size = foldr (\_ acc -> acc+1) 0 dict
-  return $ GS { suggestion = ""
-              , possible = []
+  pure $ GS { suggestion = ""
+              , possible = toList dict
               , remaining = size
               , dict = dict
               , strategy = solver
               }
 
+startSolver :: IO ()
+startSolver = do
+  x <- getArgs 
+  let arg = if length x > 1
+              then "too many args"
+              else if length x == 1
+                then map toLower $ head x
+                else ""
+
+  case arg of 
+    "" -> do
+      putStrLn "Naive wordle solver!"
+      solveTheGame $ initialSolver Naive
+    "naive" -> do
+      putStrLn "Naive wordle solver!"
+      solveTheGame $ initialSolver Naive
+    "clever" -> do
+      putStrLn "Clever wordle solver!"
+      solveTheGame $ initialSolver Clever
+    _ -> putStrLn "argument doesn't match \"\"|<naive>|<clever>."
+        
+  pure ()
+ 
+solveTheGame :: IO SolverState -> IO ()
+solveTheGame solverState = do 
+  hSetBuffering stdout NoBuffering
+  hSetBuffering stdin NoBuffering
+
+  solveSession solverState 1
+
+  putStr "Solve another "
+  yn <- yesOrNo
+  if yn then solveTheGame solverState else pure ()
+  pure ()
+
+solveSession :: IO SolverState -> Int -> IO ()
+solveSession solverState index = do
+  putStr $ "Hint " ++ show index ++ " " ++ emoji index ++ "? "
+  s <- getLine
+  solSte <- solverState
+
+  valid <- case readMaybe s :: Maybe [Match] of
+              Just ms -> pure $ True && (case (AA.lookup (map toChar ms) (dict solSte)) of
+                                            Just x -> True
+                                            Nothing -> False
+                                          )
+              Nothing -> pure $ False --solveSession solverState index
+
+  if not valid
+    then solveSession solverState index
+    else do
+        let hint = read s :: [Match]
+        newSuggestion <- case strategy solSte of
+                            Naive -> naive hint solSte 
+                            Clever -> clever hint solSte
+        let newPossible = sieve hint $ possible solSte
+        let newRemaining = length newPossible
+        let newSolSte = GS { suggestion = newSuggestion
+                            , possible = newPossible
+                            , remaining = newRemaining
+                            , dict = dict solSte
+                            , strategy = strategy solSte
+                            }
+        putStrLn $ show newSolSte
+        
+        if index == 6 
+          then do 
+            putStrLn $ "You lost! " ++ emoji 7 
+            pure () 
+          else solveSession (pure newSolSte) (index+1)
+
+emoji :: Int -> String
+emoji index 
+  | index <= 4 = "\129300"
+  | index == 5 = "\128533"
+  | index == 6 = "\128556"
+  | otherwise = "\128325"
+
 sieve :: [Match] -> [String] -> [String]
-sieve xs ys = filter (\y -> isPartialMatch xs y) ys
+sieve xs ys = snd $ sieve' xs ys
+
+sieve' :: [Match] -> [String] -> (Int, [String])
+sieve' xs ys = foldr (\y (acc, zs) -> if isPartialMatch xs y then (acc+1, y:zs) else (acc, zs)) (0, []) ys
 
 naive :: [Match] -> SolverState -> IO String
-naive hint (GS s xs r d _) 
-            = fmap snd $ foldM (\acc str -> lookCandidate str acc hint) (1, "") xs
-                  where lookCandidate cand (len, s) hint = do 
-                                                        if isPartialMatch hint cand 
-                                                          then do
-                                                            rnd <- randomRIO (1, len) :: IO Int
-                                                            return (len+1, if rnd == 1 then cand else s)
-                                                          else return (len, s)
-
-format :: Match -> Char
-format x = case x of
-              Absent x -> x
-              Correct x -> x
-              Misplaced x -> x
-
--- Dado un target y un match, devuelve si el match es una posible solución
-isPartialMatch :: [Match] -> String -> Bool
-isPartialMatch xs ys = match guess (Target ys) == xs
-                      where guess = Guess $ map format xs
-
+naive hint (GS _ xs _ _ _) = 
+  fmap snd $ foldM (\acc str -> lookCand str acc hint) (1, "") xs
+             where lookCand cand (len, s) hint = do 
+                      if isPartialMatch hint cand 
+                        then do
+                          rnd <- randomRIO (1, len) :: IO Int
+                          pure (len+1, if rnd == 1 then cand else s)
+                        else pure (len, s)
 
 clever :: [Match] -> SolverState -> IO String
 clever hint (GS _ _ _ dict _) = pure $ snd $ minimum $ fmap (
@@ -61,3 +135,15 @@ clever hint (GS _ _ _ dict _) = pure $ snd $ minimum $ fmap (
     ) words, w)
   ) words
   where words = sieve hint (toList dict)
+
+toChar :: Match -> Char
+toChar x = case x of
+              Absent x -> x
+              Correct x -> x
+              Misplaced x -> x
+
+-- Dado un target y un match, devuelve si el match es una posible solución
+isPartialMatch :: [Match] -> String -> Bool
+isPartialMatch xs ys = match guess (Target ys) == xs
+                      where guess = Guess $ map toChar xs
+

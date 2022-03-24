@@ -21,7 +21,7 @@ data GameState = GS { played :: Int
 initialState :: IO GameState
 initialState = do
   dict <- loadDictionary dictionary
-  return $ GS 0 0 0 (Target "") dict
+  pure $ GS 0 0 0 (Target "") dict
 
 instance Show GameState where
   show (GS played won streak target dict) =
@@ -47,7 +47,7 @@ playTheGame gsInitial = do
   putStrLn "Welcome to the game of Hangman!"
   result <- play 1 target dict
   gs <- gsInitial
-  let gsNew = return $ gs { played = played gs + 1
+  let gsNew = pure $ gs { played = played gs + 1
                           , won = if result == Win target then won gs + 1 else won gs
                           , streak = if result == Win target then streak gs + 1 else 0
                           , target = target
@@ -56,8 +56,9 @@ playTheGame gsInitial = do
   putStrLn $ show result
   gsShow <- gsNew
   putStrLn $ show gsShow
+  putStr "Play again "
   yn <- yesOrNo
-  if yn then playTheGame gsNew else return ()
+  if yn then playTheGame gsNew else pure ()
 
 play :: Int -> Target -> AA.AA String String -> IO Result
 play currentTurn target dict = do
@@ -74,9 +75,9 @@ play currentTurn target dict = do
       putStrLn $ " " ++ show matching
       let result = fullMatch matching
       if result 
-        then return $ Win target
+        then pure $ Win target
         else if currentTurn == turns
-          then return $ Lose target
+          then pure $ Lose target
           else play (currentTurn+1) target dict
 
 readFive :: IO String
@@ -123,10 +124,10 @@ readFive = readChars 5 "" <&> map toLower
 
 pickTarget :: AA.AA String String -> IO Target
 pickTarget dict = do str <- reservoirSampling dict
-                     return $ Target str
+                     pure $ Target str
 
 reservoirSampling :: AA.AA String String -> IO String
 reservoirSampling dict = fmap snd $ foldM (\(sz, curr) new -> getWord sz new curr) (1,"") dict
                           where getWord sz new curr = do r <- randomRIO (1, sz) :: IO Int
-                                                         return (sz+1, if r == 1 then new else curr)
+                                                         pure (sz+1, if r == 1 then new else curr)
 

@@ -14,7 +14,7 @@ import qualified AA as AA
 data Match = Absent Char
             | Misplaced Char
             | Correct Char
-            deriving Eq
+            deriving (Eq)
 
 data Target = Target String deriving Eq
 data Guess = Guess String
@@ -67,13 +67,13 @@ instance Read Match where
       '\129001' -> do
         _ <- get
         x <- get
-        return $ Correct x
+        pure $ Correct x
       '\129000' -> do
         _ <- get
         x <- get
-        return $ Misplaced x
+        pure $ Misplaced x
       '\11035' -> do
         _ <- get
         x <- get
-        return $ Absent x
+        pure $ Absent x
       _ -> pfail
