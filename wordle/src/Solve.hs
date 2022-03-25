@@ -32,7 +32,7 @@ instance Show SolverState where
 initialSolver :: Solver -> IO SolverState
 initialSolver solver = do
   dict <- loadDictionary dictionary
-  let size = foldr (\_ acc -> acc+1) 0 dict
+  let size = length $ toList dict
   pure $ GS { suggestion = ""
               , possible = toList dict
               , remaining = size
@@ -47,6 +47,8 @@ solveTheGame defaultState = do
               1 -> map toLower $ head x
               0 -> "naive"
               _ -> "too many arguments"
+
+  putStrLn $ "There are 4594 possible words."
 
   case arg of
     x | x == "" || x == "naive" -> do
@@ -95,7 +97,7 @@ solveSession solverState index = do
                         Clever -> clever hint solSte
 
         case remaining newSolSte of
-          x | x <= 1 -> do
+          1 -> do
             putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
             pure ()
           _ -> do
@@ -159,10 +161,10 @@ clever hint ss@(GS _ possible _ _ _) = do
   let finalTree = foldr (\(m, str) acc -> AA.insert str (m, str) acc) AA.empty candidates
 
   -- O(log n) Finalmente agarramos el mínimo valor en ese árbol y lo enviamos como sugerencia
-  let (deletions, newSuggestion) = minimum finalTree
+  let (_, newSuggestion) = minimum finalTree
   pure $ ss { suggestion = newSuggestion
             , possible = newPossible
-            , remaining = newRemaining-1
+            , remaining = newRemaining
             }
 
 sortLT :: (Int, String) -> (Int, String) -> Ordering
