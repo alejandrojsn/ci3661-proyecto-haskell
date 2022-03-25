@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           wordle
-version:        0.1.0.0
+version:        2
 description:    Please see the README on GitHub at <https://github.com/githubuser/wordle#readme>
 homepage:       https://github.com/githubuser/wordle#readme
 bug-reports:    https://github.com/githubuser/wordle/issues

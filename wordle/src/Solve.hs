@@ -12,9 +12,8 @@ import Control.Monad (foldM)
 import Data.Foldable (Foldable(toList))
 import System.IO (hSetBuffering, stdin, stdout, BufferMode(NoBuffering))
 import Text.Read (readMaybe)
-import System.Environment
+import System.Environment (getArgs)
 import Data.Char (toLower)
-import Data.Tuple.Extra (dupe)
 import Data.List (sortBy)
 
 data Solver = Naive | Clever
