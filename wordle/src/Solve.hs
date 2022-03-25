@@ -58,18 +58,21 @@ startSolver = do
   pure ()
  
 solveTheGame :: IO SolverState -> IO ()
-solveTheGame solverState = do 
+solveTheGame initialState = do 
   hSetBuffering stdout NoBuffering
   hSetBuffering stdin NoBuffering
 
-  solveSession solverState 1
+  solveSession initialState 1
 
   putStr "Solve another "
   yn <- yesOrNo
-  if yn then solveTheGame solverState else pure ()
+  if yn then solveTheGame initialState else pure ()
   pure ()
 
 solveSession :: IO SolverState -> Int -> IO ()
+solveSession _ 7 = do 
+  putStrLn $ "You lost! " ++ emoji 7
+  pure ()
 solveSession solverState index = do
   putStr $ "Hint " ++ show index ++ " " ++ emoji index ++ "? "
   s <- getLine
@@ -80,7 +83,7 @@ solveSession solverState index = do
                                             Just x -> True
                                             Nothing -> False
                                           )
-              Nothing -> pure $ False --solveSession solverState index
+              Nothing -> pure $ False 
 
   if not valid
     then solveSession solverState index
@@ -89,21 +92,18 @@ solveSession solverState index = do
         newSuggestion <- case strategy solSte of
                             Naive -> naive hint solSte 
                             Clever -> clever hint solSte
-        let newPossible = sieve hint $ possible solSte
-        let newRemaining = length newPossible
+        let (newRemaining, newPossible) = sieve' hint $ possible solSte
         let newSolSte = GS { suggestion = newSuggestion
                             , possible = newPossible
                             , remaining = newRemaining
                             , dict = dict solSte
                             , strategy = strategy solSte
                             }
+        putStrLn $ suggestion newSolSte
+        putStrLn $ show $ possible newSolSte
         putStrLn $ show newSolSte
         
-        if index == 6 
-          then do 
-            putStrLn $ "You lost! " ++ emoji 7 
-            pure () 
-          else solveSession (pure newSolSte) (index+1)
+        solveSession (pure newSolSte) (index+1)
 
 emoji :: Int -> String
 emoji index 
@@ -116,7 +116,10 @@ sieve :: [Match] -> [String] -> [String]
 sieve xs ys = snd $ sieve' xs ys
 
 sieve' :: [Match] -> [String] -> (Int, [String])
-sieve' xs ys = foldr (\y (acc, zs) -> if isPartialMatch xs y then (acc+1, y:zs) else (acc, zs)) (0, []) ys
+sieve' xs ys = foldr (\y (acc, zs) -> 
+                          if isPartialMatch xs y 
+                            then (acc+1, y:zs) 
+                            else (acc, zs)) (0, []) ys
 
 naive :: [Match] -> SolverState -> IO String
 naive hint (GS _ xs _ _ _) = 
