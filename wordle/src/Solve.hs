@@ -89,21 +89,17 @@ solveSession solverState index = do
     then solveSession solverState index
     else do
         let hint = read s :: [Match]
-        newSuggestion <- case strategy solSte of
+        newSolSte <- case strategy solSte of
                             Naive -> naive hint solSte 
-                            Clever -> clever hint solSte
-        let (newRemaining, newPossible) = sieve' hint $ possible solSte
-        let newSolSte = GS { suggestion = newSuggestion
-                            , possible = newPossible
-                            , remaining = newRemaining
-                            , dict = dict solSte
-                            , strategy = strategy solSte
-                            }
-        putStrLn $ suggestion newSolSte
-        putStrLn $ show $ possible newSolSte
-        putStrLn $ show newSolSte
+                            Clever -> naive hint solSte -- CAMBIAR CUANDO SE IMPLEMENTE CLEVER
         
-        solveSession (pure newSolSte) (index+1)
+        if remaining newSolSte == 1
+          then do
+            putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
+            pure ()
+          else do
+            putStrLn $ show newSolSte
+            solveSession (pure newSolSte) (index+1)
 
 emoji :: Int -> String
 emoji index 
@@ -121,15 +117,22 @@ sieve' xs ys = foldr (\y (acc, zs) ->
                             then (acc+1, y:zs) 
                             else (acc, zs)) (0, []) ys
 
-naive :: [Match] -> SolverState -> IO String
-naive hint (GS _ xs _ _ _) = 
-  fmap snd $ foldM (\acc str -> lookCand str acc hint) (1, "") xs
-             where lookCand cand (len, s) hint = do 
+naive :: [Match] -> SolverState -> IO SolverState
+naive hint (GS _ xs _ d n) = do 
+    let a = foldM (\acc str -> lookCand str acc hint) (1, "", []) xs
+             where lookCand cand (len, s, list) hint = do 
                       if isPartialMatch hint cand 
                         then do
                           rnd <- randomRIO (1, len) :: IO Int
-                          pure (len+1, if rnd == 1 then cand else s)
-                        else pure (len, s)
+                          pure (len+1, if rnd == 1 then cand else s, cand:list)
+                        else pure (len, s, list)
+    (newRemaing, newSuggestion, newPossible) <- a
+    pure $ GS { suggestion = newSuggestion
+              , possible = newPossible
+              , remaining = newRemaing-1
+              , dict = d
+              , strategy = n
+              }
 
 clever :: [Match] -> SolverState -> IO String
 clever hint (GS _ _ _ dict _) = pure $ snd $ minimum $ fmap (

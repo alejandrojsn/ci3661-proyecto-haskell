@@ -61,23 +61,23 @@ playTheGame gsInitial = do
   if yn then playTheGame gsNew else pure ()
 
 play :: Int -> Target -> AA.AA String String -> IO Result
-play currentTurn target dict = do
-  putStr $ "Guess " ++ show currentTurn ++ "? "
-  hSetEcho stdin False
-  guess <- readFive
-  hSetEcho stdin True
-  case AA.lookup guess dict of
-    Nothing -> do
-      putStrLn $ " Your guess \'" ++ guess ++ "\' is not a valid word!"
-      play (currentTurn) target dict
-    Just _ -> do
-      let matching = match (Guess guess) target
-      putStrLn $ " " ++ show matching
-      let result = fullMatch matching
-      if result 
-        then pure $ Win target
-        else if currentTurn == turns
-          then pure $ Lose target
+play currentTurn target dict 
+  | currentTurn > turns = do
+    pure $ Lose target
+  | otherwise = do
+    putStr $ "Guess " ++ show currentTurn ++ "? "
+    hSetEcho stdin False
+    guess <- readFive
+    hSetEcho stdin True
+    case AA.lookup guess dict of
+      Nothing -> do
+        putStrLn $ " Your guess \'" ++ guess ++ "\' is not a valid word!"
+        play (currentTurn) target dict
+      Just _ -> do
+        let matching = match (Guess guess) target
+        putStrLn $ " " ++ show matching
+        if fullMatch matching
+          then pure $ Win target
           else play (currentTurn+1) target dict
 
 readFive :: IO String
@@ -94,7 +94,6 @@ readFive = readChars 5 "" <&> map toLower
       if isLetter c
         then do
           putChar c
-          --hFlush stdout
           readChars (n-1) (c:"")
         else
           readChars n ""
@@ -104,7 +103,6 @@ readFive = readChars 5 "" <&> map toLower
         '\n' -> pure s
         '\DEL' -> do
             putStr "\b \b"
-            --hFlush stdout
             readChars 1 (init s)
         _ -> readChars 0 s
     readChars n s = do
@@ -112,13 +110,11 @@ readFive = readChars 5 "" <&> map toLower
       if isLetter c
         then do
           putChar c
-          --hFlush stdout
           readChars (n-1) (s ++ [c])
         else
           if c == '\DEL'
             then do
               putStr "\b \b"
-              --hFlush stdout
               readChars (n+1) (init s)
             else readChars n s
 
