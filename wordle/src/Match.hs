@@ -18,8 +18,8 @@ data Target = Target String deriving Eq
 data Guess = Guess String
 
 {- Hace una sola pasada perooo asume que el arbol tiene un [..] en val -}
-match' :: Guess -> Target -> [Match]
-match' (Guess xs) (Target ys) =
+match :: Guess -> Target -> [Match]
+match (Guess xs) (Target ys) =
         let table = foldr (\(ch, i) acc -> case AA.lookup ch acc of
                                             Just node -> AA.insert ch (AA.insert i i node) acc
                                             Nothing -> AA.insert ch (AA.insert i i AA.empty) acc
@@ -31,10 +31,6 @@ match' (Guess xs) (Target ys) =
                                  Nothing -> Absent ch : acc
                               ) [] $ zip xs [(0::Int)..]
         
-
-{- Hace mas de 1 pasada (acomodar) -}
-match :: Guess -> Target -> [Match]
-match = match'
 
 fullMatch :: [Match] -> Bool
 fullMatch = all (\x -> case x of

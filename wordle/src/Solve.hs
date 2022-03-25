@@ -92,10 +92,10 @@ solveSession solverState index = do
         let hint = read input :: [Match]
         newSolSte <- case strategy solSte of
                         Naive -> naive hint solSte
-                        Clever -> clever' hint solSte
+                        Clever -> clever hint solSte
 
         case remaining newSolSte of
-          1 -> do
+          x | x <= 1 -> do
             putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
             pure ()
           _ -> do
@@ -108,8 +108,8 @@ sieve xs ys = snd $ sieve' xs ys
 sieve' :: [Match] -> [String] -> (Int, [String])
 sieve' match words = foldr f (0, []) words
   where f word (cnt, matchedWords) = if isPartialMatch match word
-                                   then (cnt+1, word:matchedWords)
-                                   else (cnt  , matchedWords)
+                                      then (cnt+1, word:matchedWords)
+                                      else (cnt  , matchedWords)
 
 naive :: [Match] -> SolverState -> IO SolverState
 naive hint (GS _ xs _ d n) = do
@@ -129,27 +129,12 @@ naive hint (GS _ xs _ d n) = do
               }
 
 clever :: [Match] -> SolverState -> IO SolverState
-clever hint ss@(GS _ possible _ _ _) = pure ss{ suggestion = newSuggestion
-                                              , possible = newPossible
-                                              , remaining = length newPossible
-                                              }
-  where
-    newPossible = sieve hint possible
-    words = foldr (uncurry AA.insert . dupe) AA.empty newPossible
-    newSuggestion = snd $ minimum $ fmap (
-        \w -> (maximum $ fmap (remainingCount w) words, w)
-      ) words
-      where
-        remainingCount w v = length $ sieve (match (Guess w) (Target v)) newPossible
-
-
-clever' :: [Match] -> SolverState -> IO SolverState
-clever' hint ss@(GS _ possible _ _ _) = do
+clever hint ss@(GS _ possible _ _ _) = do
   -- O(n)
   let (newRemaining, newPossible) = sieve' hint possible
 
   -- O(n^2)
-  let allPairs = [(x,y) | x <- newPossible, y <- newPossible, x /= y]   
+  let allPairs = [(x,y) | x <- newPossible, y <- newPossible]   
 
   -- O(n*k) en espacio: Como tenemos n palabras, y k posibles matches, todos los posibles matches 
   -- son a lo sumo (puede haber repetidos) n*k. Dónde k = 3^5 (tbf k es constante, so we can just say O(n)).
@@ -163,16 +148,17 @@ clever' hint ss@(GS _ possible _ _ _) = do
 
   -- O(n^2*k) en tiempo: n*k posibles match y un sieve de O(n) por cada uno de ellos. (Again K constante = 243)
   -- Tenemos un par (match, str) por cada nodo en el árbol y guardaremos en una lista los pares (num, str)
-  -- dónde num es el número de palabras que descartaría con el Guess 'str' y con el match 'match'.
+  -- dónde num es el número de palabras que quedarían con el Guess 'str' y con el match 'match'.
   let candidates = sortBy sortLT $ foldr (\(m, str) acc -> (fst $ sieve' m newPossible, str): acc) [] treeWithAllMatches
 
-  -- O(n^2*k*log n): Para cada para palabra str, pueden haber varios (i_0, str), ..., (i_n, str), de estos tenemos que agarrar 
-  -- el mínimo (porque es el peor caso), por lo tanto para eliminar repetidos metemos la lista candidates (ya ordenada GT) dentro de un
-  -- árbol, el razonamiento de esto es que insert cuando detecta un repetido, reemplaza el valor viejo, y
-  -- al estar la lista ordenada, el valor que quedara en el árbol sera el menor.
+  -- O(n^2*k*log n): Para cada para palabra str, pueden haber varios (i_0, str), ..., (i_n, str),
+  -- de estos tenemos que agarrar el máximo de posible de palabras restaste (porque es el peor caso), 
+  -- por lo tanto para eliminar repetidos metemos la lista candidates (ya ordenada LT) dentro de 
+  -- un árbol, el razonamiento de esto es que insert cuando detecta un repetido, reemplaza el valor 
+  -- viejo, y al estar la lista ordenada, el valor que quedara en el árbol sera el mayor.
   let finalTree = foldr (\(m, str) acc -> AA.insert str (m, str) acc) AA.empty candidates
 
-  -- O(log n) Finalmente agarramos el máximo valor en ese árbol y lo enviamos como sugerencia
+  -- O(log n) Finalmente agarramos el mínimo valor en ese árbol y lo enviamos como sugerencia
   let (deletions, newSuggestion) = minimum finalTree
   pure $ ss { suggestion = newSuggestion
             , possible = newPossible
