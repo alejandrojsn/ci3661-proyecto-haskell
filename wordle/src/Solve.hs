@@ -164,7 +164,7 @@ clever' hint ss@(GS _ possible _ _ _) = do
   -- O(n^2*k) en tiempo: n*k posibles match y un sieve de O(n) por cada uno de ellos. (Again K constante = 243)
   -- Tenemos un par (match, str) por cada nodo en el árbol y guardaremos en una lista los pares (num, str)
   -- dónde num es el número de palabras que descartaría con el Guess 'str' y con el match 'match'.
-  let candidates = sortBy sortGT $ foldr (\(m, str) acc -> (fst $ sieve' m newPossible, str): acc) [] treeWithAllMatches
+  let candidates = sortBy sortLT $ foldr (\(m, str) acc -> (fst $ sieve' m newPossible, str): acc) [] treeWithAllMatches
 
   -- O(n^2*k*log n): Para cada para palabra str, pueden haber varios (i_0, str), ..., (i_n, str), de estos tenemos que agarrar 
   -- el mínimo (porque es el peor caso), por lo tanto para eliminar repetidos metemos la lista candidates (ya ordenada GT) dentro de un
@@ -173,16 +173,16 @@ clever' hint ss@(GS _ possible _ _ _) = do
   let finalTree = foldr (\(m, str) acc -> AA.insert str (m, str) acc) AA.empty candidates
 
   -- O(log n) Finalmente agarramos el máximo valor en ese árbol y lo enviamos como sugerencia
-  let (deletions, newSuggestion) = maximum finalTree
+  let (deletions, newSuggestion) = minimum finalTree
   pure $ ss { suggestion = newSuggestion
             , possible = newPossible
             , remaining = newRemaining-1
             }
 
-sortGT :: (Int, String) -> (Int, String) -> Ordering
-sortGT (a1, b1) (a2, b2)
-  | a1 < a2 = GT
-  | a1 > a2 = LT
+sortLT :: (Int, String) -> (Int, String) -> Ordering
+sortLT (a1, b1) (a2, b2)
+  | a1 > a2 = GT
+  | a1 < a2 = LT
   | a1 == a2 = compare b1 b2
 
 toChar :: Match -> Char
