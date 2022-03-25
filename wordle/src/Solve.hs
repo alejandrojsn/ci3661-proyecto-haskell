@@ -106,10 +106,10 @@ sieve :: [Match] -> [String] -> [String]
 sieve xs ys = snd $ sieve' xs ys
 
 sieve' :: [Match] -> [String] -> (Int, [String])
-sieve' xs ys = foldr (\y (acc, zs) ->
-                          if isPartialMatch xs y
-                            then (acc+1, y:zs)
-                            else (acc, zs)) (0, []) ys
+sieve' match words = foldr f (0, []) words
+  where f word (cnt, matchedWords) = if isPartialMatch match word
+                                   then (cnt+1, word:matchedWords)
+                                   else (cnt  , matchedWords)
 
 naive :: [Match] -> SolverState -> IO SolverState
 naive hint (GS _ xs _ d n) = do
