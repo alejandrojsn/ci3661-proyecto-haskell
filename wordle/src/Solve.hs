@@ -91,7 +91,7 @@ solveSession solverState index = do
         let hint = read s :: [Match]
         newSolSte <- case strategy solSte of
                             Naive -> naive hint solSte 
-                            Clever -> naive hint solSte -- CAMBIAR CUANDO SE IMPLEMENTE CLEVER
+                            Clever -> clever hint solSte
         
         if remaining newSolSte == 1
           then do
@@ -134,13 +134,18 @@ naive hint (GS _ xs _ d n) = do
               , strategy = n
               }
 
-clever :: [Match] -> SolverState -> IO String
-clever hint (GS _ _ _ dict _) = pure $ snd $ minimum $ fmap (
-    \w -> (maximum $ fmap (
-        \p -> length $ sieve (match (Guess w) (Target p)) words
-    ) words, w)
-  ) words
-  where words = sieve hint (toList dict)
+clever :: [Match] -> SolverState -> IO SolverState
+clever hint ss@(GS _ possible _ _ _) = pure ss{ suggestion = newSuggestion
+                                              , possible = newPossible
+                                              , remaining = length newPossible
+                                              }
+  where
+    newPossible = sieve hint possible
+    newSuggestion = snd $ minimum $ fmap (
+        \w -> (maximum $ fmap (
+            \p -> length $ sieve (match (Guess w) (Target p)) newPossible
+        ) newPossible, w)
+      ) newPossible
 
 toChar :: Match -> Char
 toChar x = case x of
