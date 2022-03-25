@@ -37,6 +37,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , extra
     , random
   default-language: Haskell2010
 
@@ -49,6 +50,7 @@ executable solver-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , extra
     , random
     , wordle
   default-language: Haskell2010
@@ -62,6 +64,7 @@ executable wordle-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , extra
     , random
     , wordle
   default-language: Haskell2010
@@ -76,6 +79,7 @@ test-suite wordle-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , extra
     , random
     , wordle
   default-language: Haskell2010

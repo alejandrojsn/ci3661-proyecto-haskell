@@ -10,6 +10,7 @@ import System.IO
 import Text.Read (readMaybe)
 import System.Environment
 import Data.Char (toLower)
+import Data.Tuple.Extra (dupe)
 
 data Solver = Naive | Clever
 
@@ -24,7 +25,7 @@ instance Show SolverState where
   show (GS s p r d s') = show r ++ " words remain. I suggest <<" ++ s ++ ">>."
 
 initialSolver :: Solver -> IO SolverState
-initialSolver solver = do 
+initialSolver solver = do
   dict <- loadDictionary dictionary
   let size = foldr (\_ acc -> acc+1) 0 dict
   pure $ GS { suggestion = ""
@@ -36,14 +37,14 @@ initialSolver solver = do
 
 startSolver :: IO ()
 startSolver = do
-  x <- getArgs 
+  x <- getArgs
   let arg = if length x > 1
               then "too many args"
               else if length x == 1
                 then map toLower $ head x
                 else ""
 
-  case arg of 
+  case arg of
     "" -> do
       putStrLn "Naive wordle solver!"
       solveTheGame $ initialSolver Naive
@@ -54,11 +55,11 @@ startSolver = do
       putStrLn "Clever wordle solver!"
       solveTheGame $ initialSolver Clever
     _ -> putStrLn "argument doesn't match \"\"|<naive>|<clever>."
-        
+
   pure ()
- 
+
 solveTheGame :: IO SolverState -> IO ()
-solveTheGame initialState = do 
+solveTheGame initialState = do
   hSetBuffering stdout NoBuffering
   hSetBuffering stdin NoBuffering
 
@@ -70,7 +71,7 @@ solveTheGame initialState = do
   pure ()
 
 solveSession :: IO SolverState -> Int -> IO ()
-solveSession _ 7 = do 
+solveSession _ 7 = do
   putStrLn $ "You lost! " ++ emoji 7
   pure ()
 solveSession solverState index = do
@@ -79,20 +80,19 @@ solveSession solverState index = do
   solSte <- solverState
 
   valid <- case readMaybe s :: Maybe [Match] of
-              Just ms -> pure $ True && (case (AA.lookup (map toChar ms) (dict solSte)) of
-                                            Just x -> True
-                                            Nothing -> False
-                                          )
-              Nothing -> pure $ False 
+              Just ms -> pure $ case AA.lookup (map toChar ms) (dict solSte) of
+                                Just x  -> True
+                                Nothing -> False
+              Nothing -> pure False
 
   if not valid
     then solveSession solverState index
     else do
         let hint = read s :: [Match]
         newSolSte <- case strategy solSte of
-                            Naive -> naive hint solSte 
+                            Naive -> naive hint solSte
                             Clever -> clever hint solSte
-        
+
         if remaining newSolSte == 1
           then do
             putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
@@ -102,7 +102,7 @@ solveSession solverState index = do
             solveSession (pure newSolSte) (index+1)
 
 emoji :: Int -> String
-emoji index 
+emoji index
   | index <= 4 = "\129300"
   | index == 5 = "\128533"
   | index == 6 = "\128556"
@@ -112,16 +112,16 @@ sieve :: [Match] -> [String] -> [String]
 sieve xs ys = snd $ sieve' xs ys
 
 sieve' :: [Match] -> [String] -> (Int, [String])
-sieve' xs ys = foldr (\y (acc, zs) -> 
-                          if isPartialMatch xs y 
-                            then (acc+1, y:zs) 
+sieve' xs ys = foldr (\y (acc, zs) ->
+                          if isPartialMatch xs y
+                            then (acc+1, y:zs)
                             else (acc, zs)) (0, []) ys
 
 naive :: [Match] -> SolverState -> IO SolverState
-naive hint (GS _ xs _ d n) = do 
+naive hint (GS _ xs _ d n) = do
     let a = foldM (\acc str -> lookCand str acc hint) (1, "", []) xs
-             where lookCand cand (len, s, list) hint = do 
-                      if isPartialMatch hint cand 
+             where lookCand cand (len, s, list) hint = do
+                      if isPartialMatch hint cand
                         then do
                           rnd <- randomRIO (1, len) :: IO Int
                           pure (len+1, if rnd == 1 then cand else s, cand:list)
@@ -141,11 +141,12 @@ clever hint ss@(GS _ possible _ _ _) = pure ss{ suggestion = newSuggestion
                                               }
   where
     newPossible = sieve hint possible
+    words = foldr (uncurry AA.insert . dupe) AA.empty newPossible
     newSuggestion = snd $ minimum $ fmap (
-        \w -> (maximum $ fmap (
-            \p -> length $ sieve (match (Guess w) (Target p)) newPossible
-        ) newPossible, w)
-      ) newPossible
+        \w -> (maximum $ fmap (remainingCount w) words, w)
+      ) words
+      where
+        remainingCount w v = length $ sieve (match (Guess w) (Target v)) newPossible
 
 toChar :: Match -> Char
 toChar x = case x of
