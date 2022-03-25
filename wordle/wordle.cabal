@@ -9,7 +9,7 @@ version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/wordle#readme>
 homepage:       https://github.com/githubuser/wordle#readme
 bug-reports:    https://github.com/githubuser/wordle/issues
-author:         Author name here
+author:         Alejandro Salazar, Cristian Inojosa
 maintainer:     example@example.com
 copyright:      2022 Author name here
 license:        BSD3
@@ -26,7 +26,6 @@ source-repository head
 library
   exposed-modules:
       AA
-      Lib
       Match
       Play
       Solve

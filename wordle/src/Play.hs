@@ -1,15 +1,18 @@
-module Play where
+module Play (
+  playTheGame,
+  initialState,
+) where
 
-import qualified AA as AA
-import Util
-import Match
-import System.Random 
-import Control.Monad
+import qualified AA as AA (AA, lookup, insert, empty)
+import Util (loadDictionary, dictionary, turns, yesOrNo)
+import Match 
+import System.Random (randomRIO)
+import Control.Monad (foldM)
 import GHC.IO.Handle (hSetEcho)
 import GHC.IO.Handle.FD (stdin)
 import Data.Char (isLetter, toLower)
 import Data.Functor ( (<&>) )
-import System.IO
+import System.IO (hFlush, hSetBuffering, stdin, stdout, BufferMode(NoBuffering))
 
 data GameState = GS { played :: Int
                     , won :: Int
@@ -17,11 +20,6 @@ data GameState = GS { played :: Int
                     , target :: Target
                     , dict :: AA.AA String String
                     }
-
-initialState :: IO GameState
-initialState = do
-  dict <- loadDictionary dictionary
-  pure $ GS 0 0 0 (Target "") dict
 
 instance Show GameState where
   show (GS played won streak target dict) =
@@ -38,13 +36,17 @@ instance Show Result where
   show (Win (Target t)) = "Got it! It was " ++ t ++ " \128526"
   show (Lose (Target t)) = "Bummer! It was " ++ t ++ " \128128"
 
+initialState :: IO GameState
+initialState = do
+  dict <- loadDictionary dictionary
+  pure $ GS 0 0 0 (Target "") dict
+
 playTheGame :: IO GameState -> IO ()
 playTheGame gsInitial = do
   hSetBuffering stdout NoBuffering
   hSetBuffering stdin NoBuffering
   dict <- loadDictionary dictionary
   target <- pickTarget dict
-  putStrLn "Welcome to the game of Hangman!"
   result <- play 1 target dict
   gs <- gsInitial
   let gsNew = pure $ gs { played = played gs + 1

@@ -3,18 +3,16 @@ module Match(
   Target(..),
   Guess(..),
   match,
-  match',
   fullMatch,
 ) where
 
-import Text.Read
-import Text.ParserCombinators.ReadPrec 
+import Text.Read (readPrec, parens, get, pfail)
 import qualified AA as AA 
 
 data Match = Absent Char
             | Misplaced Char
             | Correct Char
-            deriving (Eq)
+            deriving (Eq, Ord)
 
 data Target = Target String deriving Eq
 data Guess = Guess String

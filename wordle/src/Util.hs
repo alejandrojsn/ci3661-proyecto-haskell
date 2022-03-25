@@ -1,16 +1,12 @@
 module Util(
   turns,
   dictionary,
-  fiveLetterWords,
   loadDictionary,
   yesOrNo,
-  lengthDict,
 ) where 
 
 import qualified AA as AA
-import Control.Monad 
-import Data.Char
-import System.IO
+import System.IO (readFile, hSetEcho, stdin)
 
 turns :: Int
 turns = 6

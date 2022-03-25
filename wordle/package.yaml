@@ -2,7 +2,7 @@ name:                wordle
 version:             0.1.0.0
 github:              "githubuser/wordle"
 license:             BSD3
-author:              "Author name here"
+author:              "Alejandro Salazar, Cristian Inojosa"
 maintainer:          "example@example.com"
 copyright:           "2022 Author name here"
 
