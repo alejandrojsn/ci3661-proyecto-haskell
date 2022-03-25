@@ -41,6 +41,8 @@ initialState = do
   dict <- loadDictionary dictionary
   pure $ GS 0 0 0 (Target "") dict
 
+-- Carga la informacion principal del juego, escoge el target, y llama a una sesión de juego,
+-- después de casa sesión se pregunta si desea jugar de nuevo
 playTheGame :: IO GameState -> IO ()
 playTheGame gsInitial = do
   hSetBuffering stdout NoBuffering
@@ -62,6 +64,7 @@ playTheGame gsInitial = do
   yn <- yesOrNo
   if yn then playTheGame gsNew else pure ()
 
+-- Sesión de juego, se interactúa con el usuario hasta que gane o se le acaben los turnos
 play :: Int -> Target -> AA.AA String String -> IO Result
 play currentTurn target dict 
   | currentTurn > turns = do
@@ -124,6 +127,8 @@ pickTarget :: AA.AA String String -> IO Target
 pickTarget dict = do str <- reservoirSampling dict
                      pure $ Target str
 
+-- Estrategia de selección de target: selecciona una palabra al azar de la lista de palabras
+-- se basa en la estrategia: https://en.wikipedia.org/wiki/Reservoir_sampling
 reservoirSampling :: AA.AA String String -> IO String
 reservoirSampling dict = fmap snd $ foldM (\(sz, curr) new -> getWord sz new curr) (1,"") dict
                           where getWord sz new curr = do r <- randomRIO (1, sz) :: IO Int

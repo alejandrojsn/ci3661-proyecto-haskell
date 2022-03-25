@@ -10,6 +10,7 @@ import Prelude hiding (lookup)
 import Data.Bifunctor ( Bifunctor(bimap) )
 import Data.Either (isRight, lefts, fromLeft)
 
+-- Árbol AA
 data AA k a = Empty
             | Node { lvl :: Int
             , key :: k
@@ -19,6 +20,7 @@ data AA k a = Empty
             }
             deriving Show
 
+-- Función equivalente a map, pero en un árbol
 mapTree :: (a -> b) -> AA k a -> AA k b
 mapTree f Empty = Empty
 mapTree f (Node l k v lt rt) = Node l k (f v) (mapTree f lt) (mapTree f rt)
@@ -26,6 +28,7 @@ mapTree f (Node l k v lt rt) = Node l k (f v) (mapTree f lt) (mapTree f rt)
 instance Functor (AA k) where
   fmap = mapTree
 
+-- Función equivalente a foldr, pero en un árbol
 foldrA :: (a -> b -> b) -> b -> AA k a -> b
 foldrA f b Empty = b
 foldrA f b (Node _ _ v lt rt) = foldrA f (f v (foldrA f b rt)) lt

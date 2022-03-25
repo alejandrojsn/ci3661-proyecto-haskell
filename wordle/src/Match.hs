@@ -17,17 +17,19 @@ data Match = Absent Char
 data Target = Target String deriving Eq
 data Guess = Guess String
 
-{- Hace una sola pasada perooo asume que el arbol tiene un [..] en val -}
+-- Devuelve el resultado de comparar un guess y un target según las reglas de Wordle
+-- Se crea un árbol con key = Char, y val = Árbol de índices, en donde 
+-- cada val (árbol) es una contiene los índices respectivos de Char en el Target
 match :: Guess -> Target -> [Match]
 match (Guess xs) (Target ys) =
-        let table = foldr (\(ch, i) acc -> case AA.lookup ch acc of
+        let tree = foldr (\(ch, i) acc -> case AA.lookup ch acc of
                                             Just node -> AA.insert ch (AA.insert i i node) acc
                                             Nothing -> AA.insert ch (AA.insert i i AA.empty) acc
                                               ) AA.empty $ zip ys [(0::Int)..] in
-        foldr (\(ch, i) acc -> case AA.lookup ch table of
-                                 Just node -> case AA.lookup i node of
-                                                Just _ -> Correct ch : acc
-                                                Nothing -> Misplaced ch : acc
+        foldr (\(ch, i) acc -> case AA.lookup ch tree of
+                                 Just nodeTree -> case AA.lookup i nodeTree of
+                                                    Just _ -> Correct ch : acc
+                                                    Nothing -> Misplaced ch : acc
                                  Nothing -> Absent ch : acc
                               ) [] $ zip xs [(0::Int)..]
         

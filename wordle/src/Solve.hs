@@ -5,7 +5,7 @@ module Solve(
 ) where
 
 import qualified AA as AA
-import Util (loadDictionary, dictionary, yesOrNo)
+import Util (loadDictionary, dictionary, yesOrNo, turns)
 import Match hiding (fullMatch) 
 import System.Random (randomRIO)
 import Control.Monad (foldM)
@@ -40,6 +40,7 @@ initialSolver solver = do
               , strategy = solver
               }
 
+-- Carga la informacion principal del solver, incluyendo el tipo de solver a usar
 solveTheGame :: IO SolverState -> IO ()
 solveTheGame defaultState = do
   x <- getArgs
@@ -62,6 +63,7 @@ solveTheGame defaultState = do
 
   pure ()
 
+-- Llama a una sesión de solver, después de casa sesión se pregunta si desea jugar de nuevo
 startSolver :: IO SolverState -> IO ()
 startSolver initialState = do
   hSetBuffering stdout NoBuffering
@@ -73,46 +75,51 @@ startSolver initialState = do
   yn <- yesOrNo
   if yn then startSolver initialState else pure ()
 
+-- Sesión de solver, se interactúa con el usuario hasta que gane o se le acaben los turnos
 solveSession :: IO SolverState -> Int -> IO ()
-solveSession _ 7 = do
-  putStrLn $ "You lost! " ++ emoji 7
-  pure ()
-solveSession solverState index = do
-  putStr $ "Hint " ++ show index ++ " " ++ emoji index ++ "? "
-  input <- getLine
-  solSte <- solverState
+solveSession solverState index 
+  | index > turns = do
+    putStrLn $ "You lost! " ++ emoji 7
+    pure ()
+  | otherwise = do
+    putStr $ "Hint " ++ show index ++ " " ++ emoji index ++ "? "
+    input <- getLine
+    solSte <- solverState
 
-  valid <- case readMaybe input :: Maybe [Match] of
-              Just ms -> pure $ case AA.lookup (map toChar ms) (dict solSte) of
-                                  Just x  -> True
-                                  Nothing -> False
-              Nothing -> pure False
+    valid <- case readMaybe input :: Maybe [Match] of
+                Just ms -> pure $ case AA.lookup (map toChar ms) (dict solSte) of
+                                    Just x  -> True
+                                    Nothing -> False
+                Nothing -> pure False
 
-  if not valid
-    then solveSession solverState index
-    else do
-        let hint = read input :: [Match]
-        newSolSte <- case strategy solSte of
-                        Naive -> naive hint solSte
-                        Clever -> clever hint solSte
+    if not valid
+      then solveSession solverState index
+      else do
+          let hint = read input :: [Match]
+          newSolSte <- case strategy solSte of
+                          Naive -> naive hint solSte
+                          Clever -> clever hint solSte
 
-        case remaining newSolSte of
-          1 -> do
-            putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
-            pure ()
-          _ -> do
-            putStrLn $ show newSolSte
-            solveSession (pure newSolSte) (index+1)
+          case remaining newSolSte of
+            1 -> do
+              putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
+              pure ()
+            _ -> do
+              putStrLn $ show newSolSte
+              solveSession (pure newSolSte) (index+1)
 
 sieve :: [Match] -> [String] -> [String]
 sieve xs ys = snd $ sieve' xs ys
 
+-- Sieve pero con más información
 sieve' :: [Match] -> [String] -> (Int, [String])
 sieve' match words = foldr f (0, []) words
   where f word (cnt, matchedWords) = if isPartialMatch match word
                                       then (cnt+1, word:matchedWords)
                                       else (cnt  , matchedWords)
 
+-- Estrategia ingenua donde se toma una palabra valida aleatoria de sugerencia,
+-- la parte aleatoria usa reservoir sampling
 naive :: [Match] -> SolverState -> IO SolverState
 naive hint (GS _ xs _ d n) = do
     let a = foldM (\acc str -> lookCand str acc hint) (1, "", []) xs
@@ -154,10 +161,10 @@ clever hint ss@(GS _ possible _ _ _) = do
   let candidates = sortBy sortLT $ foldr (\(m, str) acc -> (fst $ sieve' m newPossible, str): acc) [] treeWithAllMatches
 
   -- O(n^2*k*log n): Para cada para palabra str, pueden haber varios (i_0, str), ..., (i_n, str),
-  -- de estos tenemos que agarrar el máximo de posible de palabras restaste (porque es el peor caso), 
+  -- de estos tenemos que agarrar el máximo de posible de palabras restantes (porque es el peor caso), 
   -- por lo tanto para eliminar repetidos metemos la lista candidates (ya ordenada LT) dentro de 
-  -- un árbol, el razonamiento de esto es que insert cuando detecta un repetido, reemplaza el valor 
-  -- viejo, y al estar la lista ordenada, el valor que quedara en el árbol sera el mayor.
+  -- un árbol, el razonamiento de esto es que cuando AA.insert detecta un repetido, este reemplaza el valor 
+  -- viejo, y al estar la lista ordenada, el valor que quedaría en el árbol será el mayor.
   let finalTree = foldr (\(m, str) acc -> AA.insert str (m, str) acc) AA.empty candidates
 
   -- O(log n) Finalmente agarramos el mínimo valor en ese árbol y lo enviamos como sugerencia
@@ -167,6 +174,9 @@ clever hint ss@(GS _ possible _ _ _) = do
             , remaining = newRemaining
             }
 
+-------------------------
+-- funciones auxiliares -
+-------------------------
 sortLT :: (Int, String) -> (Int, String) -> Ordering
 sortLT (a1, b1) (a2, b2)
   | a1 > a2 = GT
@@ -193,4 +203,4 @@ emoji index
   | index <= 4 = "\129300"
   | index == 5 = "\128533"
   | index == 6 = "\128556"
-  | otherwise = "\128325"
+  | otherwise = "\129325"
