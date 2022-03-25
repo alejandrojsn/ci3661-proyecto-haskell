@@ -5,12 +5,12 @@ module Solve(
 ) where
 
 import qualified AA as AA
-import Util
-import Match
+import Util (loadDictionary, dictionary, yesOrNo)
+import Match hiding (fullMatch) 
 import System.Random (randomRIO)
 import Control.Monad (foldM)
 import Data.Foldable (Foldable(toList))
-import System.IO
+import System.IO (hSetBuffering, stdin, stdout, BufferMode(NoBuffering))
 import Text.Read (readMaybe)
 import System.Environment
 import Data.Char (toLower)
@@ -152,27 +152,27 @@ clever' hint ss@(GS _ possible _ _ _) = do
   let allPairs = [(x,y) | x <- newPossible, y <- newPossible, x < y]   
 
   -- O(n*k) en espacio: Como tenemos n palabras, y k posibles matches, todos los posibles matches 
-  -- son a lo sumo (puede haber repetidos) n*k. Donde k = 3^5 (tbf k es constante, so we can just say O(n)).
+  -- son a lo sumo (puede haber repetidos) n*k. Dónde k = 3^5 (tbf k es constante, so we can just say O(n)).
   -- O(n^2 log n) en tiempo: n^2 pares y un insert (log n) por cada par.
   -- La idea es que si la sugerencia es incorrecta, el match generado por la sugerencia y el target
-  -- se guarde en el arbol. Entonces para todo x, y, asumimos que x es sugerencia y 'y' es target.
-  -- y guardamos ese match junto con un string que lo genere, esse string vendra del target 'y'
-  -- (notese que no importa cual string 'y' sea con tal que lo genere)
+  -- se guarde en el árbol. Entonces para todo x, y, asumimos que x es sugerencia y 'y' es target.
+  -- y guardamos ese match junto con un string que lo genere, ese string es del target 'y'
+  -- (Nótese que no importa cual string sea 'y' con tal que lo genere)
   let treeWithAllMatches = foldr (\(x,y) acc -> AA.insert (m x y) (m x y, x) acc) AA.empty allPairs
                                                 where m x y = partialMatch x y   
 
-  -- O(n^2*k) en tiempo: n*k posibles match y un sieve de O(n) por cada uno de ellos. (Again K constante 243)
-  -- Tenemos un par (match, str) por cada nodo en el arbol y guardaremos en una lista los pares (num, str)
-  -- donde num es el numero de palabras que descartaria con el Guess 'str' y con el match 'match'.
+  -- O(n^2*k) en tiempo: n*k posibles match y un sieve de O(n) por cada uno de ellos. (Again K constante = 243)
+  -- Tenemos un par (match, str) por cada nodo en el árbol y guardaremos en una lista los pares (num, str)
+  -- dónde num es el número de palabras que descartaría con el Guess 'str' y con el match 'match'.
   let candidates = sortBy sortGT $ foldr (\(m, str) acc -> (fst $ sieve' m newPossible, str): acc) [] treeWithAllMatches
 
   -- O(n^2*k*log n): Para cada para palabra str, pueden haber varios (i_0, str), ..., (i_n, str), de estos tenemos que agarrar 
-  -- el minimo (porque es el peor caso), por lo tanto para eliminar repetidos meteremos la lista ya candidates ya ordenadas dentro de un
-  -- arbol, esto por dos razones, la primera es que insert cuando detecta un repetido, reemplaza el valor viejo, y
-  -- al estar la lista ordenada el valor que quedara en el arbol sera el meonor.
+  -- el mínimo (porque es el peor caso), por lo tanto para eliminar repetidos metemos la lista candidates (ya ordenada GT) dentro de un
+  -- árbol, el razonamiento de esto es que insert cuando detecta un repetido, reemplaza el valor viejo, y
+  -- al estar la lista ordenada, el valor que quedara en el árbol sera el menor.
   let finalTree = foldr (\(m, str) acc -> AA.insert str (m, str) acc) AA.empty candidates
 
-  -- O(log n) Finalmente agarramos el maximo valor en ese arbol y lo enviamos como sugerencia
+  -- O(log n) Finalmente agarramos el máximo valor en ese árbol y lo enviamos como sugerencia
   let (deletions, newSuggestion) = maximum finalTree
   pure $ ss { suggestion = newSuggestion
             , possible = newPossible
