@@ -20,27 +20,21 @@ data Guess = Guess String
 {- Hace una sola pasada perooo asume que el arbol tiene un [..] en val -}
 match' :: Guess -> Target -> [Match]
 match' (Guess xs) (Target ys) =
-        [getMatch x c | (x,c) <- zip xs [(0::Int)..]]
-        where getMatch x c = case AA.lookup x table of
-                                      Nothing -> Absent x
-                                      Just i  -> if c `elem` i then Correct x else Misplaced x
-                where table = foldr (\(ch, i) acc -> insert' ch i acc) AA.empty $ zip ys [(0::Int)..] 
-
-
-insert' :: (Ord k) => k -> a -> AA.AA k [a] -> AA.AA k [a]
-insert' k v AA.Empty = AA.Node 0 k ([v]) AA.Empty AA.Empty
-insert' k v (AA.Node l k' v' lAA rAA)
-  | k == k' = AA.Node l k' (v:v') lAA rAA
-  | k < k' = AA.Node l k' v' (insert' k v lAA) rAA
-  | k > k' = AA.Node l k' v' lAA (insert' k v rAA)
+        let table = foldr (\(ch, i) acc -> case AA.lookup ch acc of
+                                            Just node -> AA.insert ch (AA.insert i i node) acc
+                                            Nothing -> AA.insert ch (AA.insert i i AA.empty) acc
+                                              ) AA.empty $ zip ys [(0::Int)..] in
+        foldr (\(ch, i) acc -> case AA.lookup ch table of
+                                 Just node -> case AA.lookup i node of
+                                                Just _ -> Correct ch : acc
+                                                Nothing -> Misplaced ch : acc
+                                 Nothing -> Absent ch : acc
+                              ) [] $ zip xs [(0::Int)..]
+        
 
 {- Hace mas de 1 pasada (acomodar) -}
 match :: Guess -> Target -> [Match]
-match (Guess xs) (Target ys) =  [getMatch x y | (x,y) <- zip xs ys]
-                                where getMatch x y
-                                        | x == y = Correct x
-                                        | x `elem` ys = Misplaced x
-                                        | otherwise = Absent x
+match = match'
 
 fullMatch :: [Match] -> Bool
 fullMatch = all (\x -> case x of

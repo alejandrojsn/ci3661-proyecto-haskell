@@ -149,7 +149,7 @@ clever' hint ss@(GS _ possible _ _ _) = do
   let (newRemaining, newPossible) = sieve' hint possible
 
   -- O(n^2)
-  let allPairs = [(x,y) | x <- newPossible, y <- newPossible, x < y]   
+  let allPairs = [(x,y) | x <- newPossible, y <- newPossible, x /= y]   
 
   -- O(n*k) en espacio: Como tenemos n palabras, y k posibles matches, todos los posibles matches 
   -- son a lo sumo (puede haber repetidos) n*k. Dónde k = 3^5 (tbf k es constante, so we can just say O(n)).
