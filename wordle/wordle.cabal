@@ -18,6 +18,8 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
+    package.yaml
+    stack.yaml
 
 source-repository head
   type: git

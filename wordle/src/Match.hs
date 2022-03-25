@@ -44,24 +44,21 @@ instance Show Guess where
   show (Guess xs) = "Your guess " ++ xs
 
 instance Show Match where
-  show (Correct x) = "\129001 " ++ [x]
-  show (Misplaced x) = "\129000 " ++ [x]
-  show (Absent x) = "\11035 " ++ [x]
+  show (Correct x) = "\129001" ++ [x]
+  show (Misplaced x) = "\129000" ++ [x]
+  show (Absent x) = "\11035" ++ [x]
 
 instance Read Match where 
   readPrec = parens $ do
     c <- get
     case c of
       '\129001' -> do
-        _ <- get
         x <- get
         pure $ Correct x
       '\129000' -> do
-        _ <- get
         x <- get
         pure $ Misplaced x
       '\11035' -> do
-        _ <- get
         x <- get
         pure $ Absent x
       _ -> pfail
