@@ -1,4 +1,4 @@
-name:                wordle
+name:                ph
 version:             2
 github:              "githubuser/wordle"
 license:             BSD3
@@ -38,7 +38,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - wordle
+    - ph
   solver-exe:
     main:                Main.hs
     source-dirs:         solver
@@ -47,7 +47,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - wordle
+    - ph
 tests:
   wordle-test:
     main:                Spec.hs
@@ -57,4 +57,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - wordle
+    - ph

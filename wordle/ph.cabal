@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           wordle
+name:           ph
 version:        2
 description:    Please see the README on GitHub at <https://github.com/githubuser/wordle#readme>
 homepage:       https://github.com/githubuser/wordle#readme
@@ -33,7 +33,7 @@ library
       Solve
       Util
   other-modules:
-      Paths_wordle
+      Paths_ph
   hs-source-dirs:
       src
   build-depends:
@@ -45,42 +45,42 @@ library
 executable solver-exe
   main-is: Main.hs
   other-modules:
-      Paths_wordle
+      Paths_ph
   hs-source-dirs:
       solver
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , extra
+    , ph
     , random
-    , wordle
   default-language: Haskell2010
 
 executable wordle-exe
   main-is: Main.hs
   other-modules:
-      Paths_wordle
+      Paths_ph
   hs-source-dirs:
       wordle
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , extra
+    , ph
     , random
-    , wordle
   default-language: Haskell2010
 
 test-suite wordle-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_wordle
+      Paths_ph
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , extra
+    , ph
     , random
-    , wordle
   default-language: Haskell2010
