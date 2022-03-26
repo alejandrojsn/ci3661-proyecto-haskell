@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 module Match(
   Match(..),
   Target(..),
@@ -36,9 +35,10 @@ match (Guess xs) (Target ys) =
 
 
 fullMatch :: [Match] -> Bool
-fullMatch = all (\case
-                  Correct _ -> True
-                  _ -> False)
+fullMatch = all (\x -> case x of
+                       Correct _ -> True
+                       _         -> False
+                )
 
 instance Show Target where
   show (Target xs) = "It was " ++ xs
