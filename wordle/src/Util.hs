@@ -5,8 +5,9 @@ module Util(
   yesOrNo,
 ) where 
 
-import qualified AA as AA
+import qualified AA
 import System.IO (readFile, hSetEcho, stdin)
+import Data.Tuple.Extra (dupe)
 
 turns :: Int
 turns = 6
@@ -20,7 +21,7 @@ fiveLetterWords = filter (\x -> length x == 5 && all (`elem` ['a'..'z']) x)
 loadDictionary :: FilePath -> IO (AA.AA String String)
 loadDictionary fp = do
   contents <- readFile fp
-  pure $ foldr (\(k, v) a -> AA.insert k v a) AA.empty $ map (\x -> (x, x)) $ fiveLetterWords $ lines contents
+  pure $ foldr (uncurry AA.insert . dupe) AA.empty $ fiveLetterWords $ lines contents
 
 lengthDict :: FilePath -> IO Int
 lengthDict fp = do

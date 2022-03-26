@@ -3,9 +3,9 @@ module Play (
   initialState,
 ) where
 
-import qualified AA as AA (AA, lookup, insert, empty)
+import qualified AA (AA, lookup, insert, empty)
 import Util (loadDictionary, dictionary, turns, yesOrNo)
-import Match 
+import Match
 import System.Random (randomRIO)
 import Control.Monad (foldM)
 import GHC.IO.Handle (hSetEcho)
@@ -57,16 +57,16 @@ playTheGame gsInitial = do
                           , target = target
                           , dict = dict
                           }
-  putStrLn $ show result
+  print result
   gsShow <- gsNew
-  putStrLn $ show gsShow
+  print gsShow
   putStr "Play again "
   yn <- yesOrNo
   if yn then playTheGame gsNew else pure ()
 
 -- Sesión de juego, se interactúa con el usuario hasta que gane o se le acaben los turnos
 play :: Int -> Target -> AA.AA String String -> IO Result
-play currentTurn target dict 
+play currentTurn target dict
   | currentTurn > turns = do
     pure $ Lose target
   | otherwise = do
@@ -77,7 +77,7 @@ play currentTurn target dict
     case AA.lookup guess dict of
       Nothing -> do
         putStrLn $ " Your guess \'" ++ guess ++ "\' is not a valid word!"
-        play (currentTurn) target dict
+        play currentTurn target dict
       Just _ -> do
         let matching = match (Guess guess) target
         putStrLn $ " " ++ show matching
@@ -130,7 +130,7 @@ pickTarget dict = do str <- reservoirSampling dict
 -- Estrategia de selección de target: selecciona una palabra al azar de la lista de palabras
 -- se basa en la estrategia: https://en.wikipedia.org/wiki/Reservoir_sampling
 reservoirSampling :: AA.AA String String -> IO String
-reservoirSampling dict = fmap snd $ foldM (\(sz, curr) new -> getWord sz new curr) (1,"") dict
+reservoirSampling dict = snd <$> foldM (\(sz, curr) new -> getWord sz new curr) (1,"") dict
                           where getWord sz new curr = do r <- randomRIO (1, sz) :: IO Int
                                                          pure (sz+1, if r == 1 then new else curr)
 

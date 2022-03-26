@@ -4,9 +4,9 @@ module Solve(
   Solver(..),
 ) where
 
-import qualified AA as AA
+import qualified AA
 import Util (loadDictionary, dictionary, yesOrNo, turns)
-import Match hiding (fullMatch) 
+import Match hiding (fullMatch)
 import System.Random (randomRIO)
 import Control.Monad (foldM)
 import Data.Foldable (Foldable(toList))
@@ -33,11 +33,11 @@ initialSolver solver = do
   dict <- loadDictionary dictionary
   let size = length $ toList dict
   pure $ GS { suggestion = ""
-              , possible = toList dict
-              , remaining = size
-              , dict = dict
-              , strategy = solver
-              }
+            , possible = toList dict
+            , remaining = size
+            , dict = dict
+            , strategy = solver
+            }
 
 -- Carga la informacion principal del solver, incluyendo el tipo de solver a usar
 solveTheGame :: IO SolverState -> IO ()
@@ -76,7 +76,7 @@ startSolver initialState = do
 
 -- Sesión de solver, se interactúa con el usuario hasta que gane o se le acaben los turnos
 solveSession :: IO SolverState -> Int -> IO ()
-solveSession solverState index 
+solveSession solverState index
   | index > turns = do
     putStrLn $ "You lost! " ++ emoji 7
     pure ()
@@ -104,7 +104,7 @@ solveSession solverState index
               putStrLn $ "It must be <<" ++ suggestion newSolSte ++ ">>."
               pure ()
             _ -> do
-              putStrLn $ show newSolSte
+              print newSolSte
               solveSession (pure newSolSte) (index+1)
 
 sieve :: [Match] -> [String] -> [String]
@@ -112,7 +112,7 @@ sieve xs ys = snd $ sieve' xs ys
 
 -- Sieve pero con más información
 sieve' :: [Match] -> [String] -> (Int, [String])
-sieve' match words = foldr f (0, []) words
+sieve' match = foldr f (0, [])
   where f word (cnt, matchedWords) = if isPartialMatch match word
                                       then (cnt+1, word:matchedWords)
                                       else (cnt  , matchedWords)
@@ -142,7 +142,7 @@ clever hint ss@(GS _ possible _ _ _) = do
   let (newRemaining, newPossible) = sieve' hint possible
 
   -- O(n^2)
-  let allPairs = [(x,y) | x <- newPossible, y <- newPossible]   
+  let allPairs = [(x,y) | x <- newPossible, y <- newPossible]
 
   -- O(n*k) en espacio: Como tenemos n palabras, y k posibles matches, todos los posibles matches 
   -- son a lo sumo (puede haber repetidos) n*k. Dónde k = 3^5 (tbf k es constante, so we can just say O(n)).
@@ -152,7 +152,7 @@ clever hint ss@(GS _ possible _ _ _) = do
   -- y guardamos ese match junto con un string que lo genere, ese string es del target 'y'
   -- (Nótese que no importa cual string sea 'y' con tal que lo genere)
   let treeWithAllMatches = foldr (\(x,y) acc -> AA.insert (m x y) (m x y, x) acc) AA.empty allPairs
-                                                where m x y = partialMatch x y   
+                                                where m x y = partialMatch x y
 
   -- O(n^2*k) en tiempo: n*k posibles match y un sieve de O(n) por cada uno de ellos. (Again K constante = 243)
   -- Tenemos un par (match, str) por cada nodo en el árbol y guardaremos en una lista los pares (num, str)
@@ -192,8 +192,8 @@ toChar x = case x of
 isPartialMatch :: [Match] -> String -> Bool
 isPartialMatch xs ys = match guess (Target ys) == xs
                       where guess = Guess $ map toChar xs
-                      
-partialMatch :: String -> String -> [Match] 
+
+partialMatch :: String -> String -> [Match]
 partialMatch xs ys = match (Guess xs) (Target ys)
 
 

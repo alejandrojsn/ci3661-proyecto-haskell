@@ -66,6 +66,7 @@ insert k v n@(Node _ k' _ lt rt)
   | k == k' = n { val = v }
   | k <  k' = split $ skew $ n { lAA = insert k v lt }
   | k  > k' = split $ skew $ n { rAA = insert k v rt }
+  | otherwise = undefined
 
 lookup :: (Ord k) => k -> AA k a -> Maybe a
 lookup k Empty = Nothing
@@ -73,6 +74,7 @@ lookup k (Node _ k' v lt rt)
   | k == k' = Just v
   | k <  k' = lookup k lt
   | k  > k' = lookup k rt
+  | otherwise = undefined
 
 newtype ValidAA k a = Valid (AA k a) deriving Show
 

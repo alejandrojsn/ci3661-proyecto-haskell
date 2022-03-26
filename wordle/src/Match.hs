@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Match(
   Match(..),
   Target(..),
@@ -7,15 +8,15 @@ module Match(
 ) where
 
 import Text.Read (readPrec, parens, get, pfail)
-import qualified AA as AA 
+import qualified AA
 
 data Match = Absent Char
             | Misplaced Char
             | Correct Char
             deriving (Eq, Ord)
 
-data Target = Target String deriving Eq
-data Guess = Guess String
+newtype Target = Target String deriving Eq
+newtype Guess = Guess String
 
 -- Devuelve el resultado de comparar un guess y un target según las reglas de Wordle
 -- Se crea un árbol con key = Char, y val = Árbol de índices, en donde 
@@ -32,12 +33,12 @@ match (Guess xs) (Target ys) =
                                                     Nothing -> Misplaced ch : acc
                                  Nothing -> Absent ch : acc
                               ) [] $ zip xs [(0::Int)..]
-        
+
 
 fullMatch :: [Match] -> Bool
-fullMatch = all (\x -> case x of
-                          Correct _ -> True
-                          _ -> False)
+fullMatch = all (\case
+                  Correct _ -> True
+                  _ -> False)
 
 instance Show Target where
   show (Target xs) = "It was " ++ xs
@@ -50,17 +51,14 @@ instance Show Match where
   show (Misplaced x) = "\129000" ++ [x]
   show (Absent x) = "\11035" ++ [x]
 
-instance Read Match where 
+instance Read Match where
   readPrec = parens $ do
     c <- get
     case c of
       '\129001' -> do
-        x <- get
-        pure $ Correct x
+        Correct <$> get
       '\129000' -> do
-        x <- get
-        pure $ Misplaced x
+        Misplaced <$> get
       '\11035' -> do
-        x <- get
-        pure $ Absent x
+        Absent <$> get
       _ -> pfail
